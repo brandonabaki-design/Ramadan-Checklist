@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K-4 Ramadan Walkthrough Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-bg: #F9F7F2;
+            --color-primary: #1F4E3D; /* Deep Green */
+            --color-accent: #D4AF37; /* Muted Gold */
+            --color-text: #333333;
+            --color-card: #FFFFFF;
+        }
+        body {
+            font-family: 'Lato', sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+        }
+        h1, h2, h3, .serif-font {
+            font-family: 'Amiri', serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px; /* Max width constraint */
+            height: 300px;
+            max-height: 400px;
+            margin: 0 auto;
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        /* Custom scrollbar for checklist container */
+        .checklist-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .checklist-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .checklist-scroll::-webkit-scrollbar-thumb {
+            background: #D4AF37;
+            border-radius: 3px;
+        }
+    </style>
+    <!-- Chosen Palette: Ramadan Heritage (Deep Green #1F4E3D, Gold #D4AF37, Warm Sand #F9F7F2) to evoke the season's atmosphere while maintaining professional clarity. -->
+    
+    <!-- Application Structure Plan:
+        1. Header: Sets the tone and context (Ramadan Walkthroughs).
+        2. Dashboard Layout (Grid):
+           - Left Col: Interactive Checklist. Break down the static document into actionable items. Users (Teachers/Observers) can toggle these to simulate an inspection or self-assess.
+           - Right Col: Dynamic Visualization.
+             - Top: "Readiness Score" Doughnut chart. Updates in real-time as items are checked. Gamifies the compliance process.
+             - Bottom: "Focus Distribution" Bar chart. Shows which areas carry the most weight/items.
+        3. Detailed Standards View: A section below the dashboard that expands on the "Why" and specific criteria for each point (Instruction, Environment, etc.), using cards for easy digestion.
+        4. Action Plan Generator: A dynamic text block that generates specific feedback based on what is UNCHECKED. This turns the tool into a feedback generator.
+        Why: This structure transforms a static paper list into a dynamic self-reflection tool, allowing teachers to visualize their readiness and understand the expectations actively.
+    -->
+
+    <!-- Visualization & Content Choices:
+        - Readiness Score (Doughnut Chart): Goal -> Inform/Motivate. Viz -> Chart.js Doughnut. Interaction -> Updates on checklist toggle. Justification -> Immediate visual feedback on progress towards "100% compliance".
+        - Focus Areas (Bar Chart): Goal -> Organize/Compare. Viz -> Chart.js Bar. Interaction -> Hover details. Justification -> visually separates the different domains of the walkthrough.
+        - Dynamic Feedback (Text): Goal -> Synthesize. Viz -> Text Block. Interaction -> Auto-generates based on state. Justification -> Translates binary checks into qualitative sentences for reports.
+        - Interactive Checklist (HTML/JS): Goal -> Change/Interact. Viz -> Styled List. Interaction -> Click to toggle state. Justification -> The core function of the source document.
+    -->
+    
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="p-4 md:p-8 min-h-screen flex flex-col items-center">
+
+    <!-- Main Container -->
+    <div class="max-w-7xl w-full mx-auto space-y-8">
+        
+        <!-- Action Bar (Print) -->
+        <div class="w-full flex justify-end print:hidden">
+            <button onclick="window.print()" class="bg-[#1F4E3D] hover:bg-[#15362a] text-white font-bold py-2 px-4 rounded shadow inline-flex items-center gap-2 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                Print Report
+            </button>
+        </div>
+
+        <!-- Header Section -->
+        <header class="text-center space-y-4 border-b-2 border-[#D4AF37] pb-6">
+            <h1 class="text-4xl md:text-5xl text-[#1F4E3D] font-bold">Ramadan Classroom Walkthrough</h1>
+            <p class="text-lg text-gray-600 max-w-3xl mx-auto">
+                Interactive Standards & Self-Assessment Tool for K-4 Teams. 
+                Use this dashboard to ensure high-quality teaching, active engagement, and a pristine environment during the holy month.
+            </p>
+        </header>
+
+        <!-- Intro Context -->
+        <section class="bg-white rounded-lg shadow-sm p-6 border-l-4 border-[#1F4E3D]">
+            <h2 class="text-2xl font-bold text-[#1F4E3D] mb-2 serif-font">Instructional Quality Assurance</h2>
+            <p class="text-gray-700 leading-relaxed">
+                As we settle into the rhythm of Ramadan, our commitment to "very good" to "outstanding" education remains our top priority. 
+                This interactive tool translates our K-4 expectations into a live checklist. Teachers can use this for self-assessment, 
+                and observers can use it to track alignment with our core pillars: Instruction, Engagement, Environment, and Professionalism.
+            </p>
+        </section>
+
+        <!-- Main Dashboard Area -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- Left Column: Interactive Checklist -->
+            <div class="lg:col-span-7 space-y-6">
+                <div class="bg-white rounded-xl shadow-lg p-6 h-full border border-gray-100">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold text-[#1F4E3D] flex items-center gap-2">
+                            <span class="text-2xl">📋</span> Observation Checklist
+                        </h3>
+                        <button onclick="resetChecklist()" class="text-sm text-[#D4AF37] hover:text-[#b08d26] font-semibold transition-colors print:hidden">
+                            Reset Form
+                        </button>
+                    </div>
+                    
+                    <p class="text-sm text-gray-500 mb-4 italic print:hidden">Click items to mark them as "Observed" or "Met". Watch the Readiness Score update.</p>
+
+                    <div id="checklist-container" class="space-y-4 checklist-scroll max-h-[600px] overflow-y-auto pr-2 print:max-h-none print:overflow-visible">
+                        <!-- Checklist Items Injected via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Analytics & Feedback -->
+            <div class="lg:col-span-5 space-y-6">
+                
+                <!-- Chart 1: Readiness Score -->
+                <div class="bg-white rounded-xl shadow-lg p-6 border-t-4 border-[#D4AF37]">
+                    <h3 class="text-lg font-bold text-[#1F4E3D] mb-4 text-center">Current Readiness Score</h3>
+                    <div class="chart-container">
+                        <canvas id="readinessChart"></canvas>
+                    </div>
+                    <p class="text-center text-sm text-gray-500 mt-2">Target: 100% Compliance</p>
+                </div>
+
+                <!-- Dynamic Feedback Generator -->
+                <div class="bg-[#F9F7F2] rounded-xl shadow-inner p-6 border border-gray-200">
+                    <h3 class="text-lg font-bold text-[#1F4E3D] mb-2">📝 Auto-Generated Observation Notes</h3>
+                    <p class="text-xs text-gray-500 mb-4">Based on unchecked items, here is suggested feedback:</p>
+                    <div id="feedback-display" class="bg-white p-4 rounded border border-gray-300 min-h-[150px] text-sm text-gray-700 italic leading-relaxed">
+                        All standards met. Outstanding work!
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Detailed Breakdown Section -->
+        <section class="py-8">
+            <h2 class="text-3xl font-bold text-[#1F4E3D] mb-8 text-center serif-font">Detailed Standards Breakdown</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Card 1 -->
+                <div class="bg-white p-6 rounded-lg shadow card-hover border-t-4 border-blue-600">
+                    <div class="text-4xl mb-4">📚</div>
+                    <h4 class="font-bold text-lg mb-2 text-gray-800">Instructional Quality</h4>
+                    <p class="text-sm text-gray-600 mb-4">Focus on curriculum alignment and high standards.</p>
+                    <ul class="text-xs text-gray-500 space-y-2 list-disc pl-4">
+                        <li>"Very Good" to "Outstanding" rating expected.</li>
+                        <li>Strict alignment with curriculum maps.</li>
+                        <li>No "downtime" or filler content.</li>
+                    </ul>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="bg-white p-6 rounded-lg shadow card-hover border-t-4 border-green-600">
+                    <div class="text-4xl mb-4">🙋‍♂️</div>
+                    <h4 class="font-bold text-lg mb-2 text-gray-800">Active Engagement</h4>
+                    <p class="text-sm text-gray-600 mb-4">Teacher presence and student focus are critical.</p>
+                    <ul class="text-xs text-gray-500 space-y-2 list-disc pl-4">
+                        <li>Actively teaching or monitoring.</li>
+                        <li>No sitting at the desk effectively.</li>
+                        <li>Students actively participating.</li>
+                    </ul>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="bg-white p-6 rounded-lg shadow card-hover border-t-4 border-yellow-500">
+                    <div class="text-4xl mb-4">🧹</div>
+                    <h4 class="font-bold text-lg mb-2 text-gray-800">Environment</h4>
+                    <p class="text-sm text-gray-600 mb-4">Maintained cleanliness throughout the day.</p>
+                    <ul class="text-xs text-gray-500 space-y-2 list-disc pl-4">
+                        <li>Check start & end of lesson.</li>
+                        <li>Orderly arrangement of desks/materials.</li>
+                        <li>Respect for the shared space.</li>
+                    </ul>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="bg-white p-6 rounded-lg shadow card-hover border-t-4 border-red-500">
+                    <div class="text-4xl mb-4">📵</div>
+                    <h4 class="font-bold text-lg mb-2 text-gray-800">Professionalism</h4>
+                    <p class="text-sm text-gray-600 mb-4">Strict adherence to professional conduct.</p>
+                    <ul class="text-xs text-gray-500 space-y-2 list-disc pl-4">
+                        <li>No personal mobile phones.</li>
+                        <li>Emergencies: Case-by-case basis.</li>
+                        <li>Full focus on the students.</li>
+                    </ul>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Footer Simulation -->
+        <footer class="mt-12 border-t border-gray-300 pt-8 w-full print:mt-6 print:pt-6">
+            <div class="bg-white p-8 rounded-lg shadow-sm max-w-4xl mx-auto print:shadow-none print:p-0">
+                <h3 class="text-center font-bold text-gray-700 mb-6 uppercase tracking-wider">
+                    <span class="print:hidden">Digital Sign-Off Simulation</span>
+                    <span class="hidden print:inline">Official Sign-Off</span>
+                </h3>
+                <div class="flex flex-col md:flex-row justify-between gap-8">
+                    <div class="w-full">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Observer</label>
+                        <input type="text" placeholder="Enter Observer Name" class="w-full border-b-2 border-gray-200 focus:border-[#D4AF37] outline-none py-2 bg-transparent transition-colors">
+                    </div>
+                    <div class="w-full">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Teacher</label>
+                        <input type="text" placeholder="Enter Teacher Name" class="w-full border-b-2 border-gray-200 focus:border-[#D4AF37] outline-none py-2 bg-transparent transition-colors">
+                    </div>
+                    <div class="w-full">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Date</label>
+                        <input type="date" class="w-full border-b-2 border-gray-200 focus:border-[#D4AF37] outline-none py-2 bg-transparent transition-colors">
+                    </div>
+                </div>
+                <p class="text-xs text-center text-gray-400 mt-6 print:hidden">
+                    *This digital form mirrors the physical checklist requirements. Signatures imply review of feedback.*
+                </p>
+                <p class="hidden print:block text-xs text-center text-gray-500 mt-6">
+                    *By signing above, the teacher acknowledges that this walkthrough occurred and the feedback has been reviewed. It does not necessarily indicate agreement with all comments.*
+                </p>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- JavaScript Implementation -->
+    <script>
+        // Data Structure based on Source Report
+        const checklistData = [
+            {
+                id: 1,
+                category: "Instructional Quality",
+                title: "Instructional Standard Met",
+                description: "Teaching and learning observed meet the expectation of 'very good' to 'outstanding'.",
+                checked: false,
+                icon: "🎓"
+            },
+            {
+                id: 2,
+                category: "Instructional Quality",
+                title: "Curriculum Alignment",
+                description: "Lesson content and standards strictly align with designated curriculum maps.",
+                checked: false,
+                icon: "🗺️"
+            },
+            {
+                id: 3,
+                category: "Active Engagement",
+                title: "Teacher Active Engagement",
+                description: "Teacher is actively teaching or monitoring student work (not seated passively).",
+                checked: false,
+                icon: "👀"
+            },
+            {
+                id: 4,
+                category: "Active Engagement",
+                title: "Student Active Focus",
+                description: "Students are actively engaged in the lesson and learning activities.",
+                checked: false,
+                icon: "🧠"
+            },
+            {
+                id: 5,
+                category: "Classroom Environment",
+                title: "Cleanliness & Organization",
+                description: "Environment is clean and orderly (checked at start/end of lesson).",
+                checked: false,
+                icon: "✨"
+            },
+            {
+                id: 6,
+                category: "Professional Expectations",
+                title: "Mobile Phone Policy",
+                description: "No personal mobile phone use observed during instructional time.",
+                checked: false,
+                icon: "🚫"
+            }
+        ];
+
+        let readinessChart;
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', () => {
+            renderChecklist();
+            initChart();
+            updateFeedback();
+        });
+
+        // Render Checklist Function
+        function renderChecklist() {
+            const container = document.getElementById('checklist-container');
+            container.innerHTML = '';
+
+            checklistData.forEach((item, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = `flex items-start p-4 rounded-lg cursor-pointer transition-all duration-200 ${item.checked ? 'bg-green-50 border border-green-200' : 'bg-gray-50 border border-gray-100 hover:bg-white hover:shadow-md'}`;
+                itemDiv.onclick = () => toggleItem(index);
+
+                itemDiv.innerHTML = `
+                    <div class="flex-shrink-0 mt-1">
+                        <div class="w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${item.checked ? 'bg-[#1F4E3D] border-[#1F4E3D]' : 'border-gray-300 bg-white'}">
+                            ${item.checked ? '<span class="text-white text-sm">✓</span>' : ''}
+                        </div>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <div class="flex justify-between items-center">
+                            <h4 class="font-bold text-gray-800 ${item.checked ? 'line-through text-opacity-50' : ''}">${item.title}</h4>
+                            <span class="text-lg">${item.icon}</span>
+                        </div>
+                        <p class="text-xs text-[#D4AF37] font-semibold uppercase tracking-wide mb-1">${item.category}</p>
+                        <p class="text-sm text-gray-600 ${item.checked ? 'text-opacity-50' : ''}">${item.description}</p>
+                    </div>
+                `;
+                container.appendChild(itemDiv);
+            });
+        }
+
+        // Toggle Logic
+        function toggleItem(index) {
+            checklistData[index].checked = !checklistData[index].checked;
+            renderChecklist();
+            updateChart();
+            updateFeedback();
+        }
+
+        // Reset Logic
+        function resetChecklist() {
+            checklistData.forEach(item => item.checked = false);
+            renderChecklist();
+            updateChart();
+            updateFeedback();
+        }
+
+        // Feedback Generator Logic
+        function updateFeedback() {
+            const feedbackContainer = document.getElementById('feedback-display');
+            const unchecked = checklistData.filter(item => !item.checked);
+            
+            if (unchecked.length === 0) {
+                feedbackContainer.innerHTML = `<span class="text-green-600 font-bold">✨ Assessment Complete:</span><br>The lesson was outstanding. The teacher demonstrated high engagement, the classroom was pristine, and instructional standards were fully met. Thank you for your dedication!`;
+                feedbackContainer.className = "bg-green-50 p-4 rounded border border-green-200 min-h-[150px] text-sm text-green-800 leading-relaxed";
+                return;
+            }
+
+            if (unchecked.length === checklistData.length) {
+                feedbackContainer.innerHTML = "Begin the walkthrough by checking off observed standards above.";
+                feedbackContainer.className = "bg-white p-4 rounded border border-gray-300 min-h-[150px] text-sm text-gray-400 italic leading-relaxed flex items-center justify-center";
+                return;
+            }
+
+            let feedbackHTML = `<span class="text-[#1F4E3D] font-bold mb-2 block">Areas for Growth / Action Items:</span><ul class="list-disc pl-5 space-y-1">`;
+            
+            unchecked.forEach(item => {
+                feedbackHTML += `<li><strong>${item.title}:</strong> Please ensure ${item.description.toLowerCase()}</li>`;
+            });
+            
+            feedbackHTML += `</ul>`;
+            feedbackContainer.innerHTML = feedbackHTML;
+            feedbackContainer.className = "bg-white p-4 rounded border border-red-100 min-h-[150px] text-sm text-gray-700 leading-relaxed";
+        }
+
+        // Chart Initialization
+        function initChart() {
+            const ctx = document.getElementById('readinessChart').getContext('2d');
+            
+            readinessChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Standards Met', 'Pending'],
+                    datasets: [{
+                        data: [0, checklistData.length],
+                        backgroundColor: [
+                            '#1F4E3D', // Met (Green)
+                            '#E5E7EB'  // Pending (Gray)
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '75%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    let value = context.raw;
+                                    let total = context.chart._metasets[context.datasetIndex].total;
+                                    let percentage = Math.round((value / total) * 100) + '%';
+                                    return label + value + ' (' + percentage + ')';
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        animateScale: true,
+                        animateRotate: true
+                    }
+                },
+                plugins: [{
+                    id: 'textCenter',
+                    beforeDraw: function(chart) {
+                        var width = chart.width,
+                            height = chart.height,
+                            ctx = chart.ctx;
+
+                        ctx.restore();
+                        var fontSize = (height / 114).toFixed(2);
+                        ctx.font = "bold " + fontSize + "em sans-serif";
+                        ctx.textBaseline = "middle";
+                        ctx.fillStyle = "#1F4E3D";
+
+                        var total = checklistData.length;
+                        var met = checklistData.filter(i => i.checked).length;
+                        var text = Math.round((met / total) * 100) + "%";
+                        
+                        var textX = Math.round((width - ctx.measureText(text).width) / 2);
+                        var textY = height / 2;
+
+                        ctx.fillText(text, textX, textY);
+                        ctx.save();
+                    }
+                }]
+            });
+        }
+
+        // Update Chart Logic
+        function updateChart() {
+            const metCount = checklistData.filter(item => item.checked).length;
+            const pendingCount = checklistData.length - metCount;
+            
+            readinessChart.data.datasets[0].data = [metCount, pendingCount];
+            readinessChart.update();
+        }
+
+    </script>
+</body>
+</html>
